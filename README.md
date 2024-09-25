@@ -1,12 +1,12 @@
-# (TODO: your game's title)
+# Only a Little Bit More than Just a Screenshot
 
-Author: (TODO: your name)
+Author: Emily Amspoker
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design: I rendered my screenshot from last time, as well as the output of my `font-maker.cpp` file. I didn't get very far on this week's assignment, sorry. 
 
-Text Drawing: (TODO: how does the text drawing in this game work? Is text precomputed? Rendered at runtime? What files or utilities are involved?)
+Text Drawing: The "text" (unreadable) is created by `font-maker.cpp` and output into a .png file. Then, using the code shown in class, I render a two textures: one of my screenshot from last week and some outputs of the `font-maker.cpp`.
 
-Choices: (TODO: how does the game store choices and narrative? How are they authored? Anything nifty you want to point out?)
+Choices: In this "game" you have no choices and no free will, you just stare at the images I render while spooky music from last week plays in the background.
 
 Screen Shot:
 
@@ -14,9 +14,9 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+No goals, no strategy.
 
-Sources: (TODO: list a source URL for any assets you did not create yourself. Make sure you have a license for the asset.)
+Sources: I used [Deja Vu Sans](https://dejavu-fonts.github.io/) for fonts, but you probably wouldn't be able to tell based on how the font rendered.
 
 This game was built with [NEST](NEST.md).
 

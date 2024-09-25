@@ -1,12 +1,15 @@
 #include "PlayMode.hpp"
 
 #include "LitColorTextureProgram.hpp"
+#include "TextureProgram.hpp"
 
 #include "DrawLines.hpp"
 #include "Mesh.hpp"
 #include "Load.hpp"
 #include "gl_errors.hpp"
 #include "data_path.hpp"
+#include "load_save_png.hpp"
+
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -37,7 +40,7 @@ Load< Scene > hexapod_scene(LoadTagDefault, []() -> Scene const * {
 });
 
 Load< Sound::Sample > dusty_floor_sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("dusty-floor.opus"));
+	return new Sound::Sample(data_path("spooky.opus"));
 });
 
 PlayMode::PlayMode() : scene(*hexapod_scene) {
@@ -62,6 +65,135 @@ PlayMode::PlayMode() : scene(*hexapod_scene) {
 	//start music loop playing:
 	// (note: position will be over-ridden in update())
 	leg_tip_loop = Sound::loop_3D(*dusty_floor_sample, 1.0f, get_leg_tip_position(), 10.0f);
+
+	// from in-class example
+	glGenTextures(1, &tex_example.tex); 
+	{
+		//load texture data as RGBA from a file:
+		std::vector< glm::u8vec4 > data;
+		glm::uvec2 size;
+		load_png(data_path("screenshot.png"), &size, &data, LowerLeftOrigin);
+
+		glBindTexture(GL_TEXTURE_2D, tex_example.tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// texture, level, color scheme, width height, border
+		// add border bc sometimes it can get weird in linear sampling, more control over interpolation
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		// maybe some aliasing, sampling lower detail than the texture
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+	};
+
+	glGenBuffers(1, &tex_example.tristrip_buffer);
+	{
+		glGenVertexArrays(1, &tex_example.tristrip_buffer_for_texture_program_vao); 
+		// make buffer of pos tex vertices
+		glBindVertexArray(tex_example.tristrip_buffer_for_texture_program_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, tex_example.tristrip_buffer);
+
+		//size, type, normalize, stride, offset <-- recall from reading
+		// these are postex vertices
+		glVertexAttribPointer(texture_program->Position_vec4,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(PosTexVertex),
+			(GLbyte*)0 + offsetof(PosTexVertex, Position)
+		);
+
+		glEnableVertexAttribArray(texture_program->Position_vec4);
+
+		//size, type, normalize, stride, offset <-- recall from reading
+		// these are postex vertices
+		glVertexAttribPointer(texture_program->TexCoord_vec2,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(PosTexVertex),
+			(GLbyte*)0 + offsetof(PosTexVertex, TexCoord)
+		);
+
+		glEnableVertexAttribArray(texture_program->TexCoord_vec2);
+
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	} 
+
+	glGenTextures(1, &tex_example2.tex); 
+	{
+		//load texture data as RGBA from a file:
+		std::vector< glm::u8vec4 > data;
+		glm::uvec2 size;
+		load_png(data_path("letter0.png"), &size, &data, LowerLeftOrigin);
+
+		glBindTexture(GL_TEXTURE_2D, tex_example2.tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// texture, level, color scheme, width height, border
+		// add border bc sometimes it can get weird in linear sampling, more control over interpolation
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		// maybe some aliasing, sampling lower detail than the texture
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+	};
+
+	glGenBuffers(1, &tex_example2.tristrip_buffer);
+	{
+		glGenVertexArrays(1, &tex_example2.tristrip_buffer_for_texture_program_vao); 
+		// make buffer of pos tex vertices
+		glBindVertexArray(tex_example2.tristrip_buffer_for_texture_program_vao);
+		glBindBuffer(GL_ARRAY_BUFFER, tex_example2.tristrip_buffer);
+
+		//size, type, normalize, stride, offset <-- recall from reading
+		// these are postex vertices
+		glVertexAttribPointer(texture_program->Position_vec4,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(PosTexVertex),
+			(GLbyte*)0 + offsetof(PosTexVertex, Position)
+		);
+
+		glEnableVertexAttribArray(texture_program->Position_vec4);
+
+		//size, type, normalize, stride, offset <-- recall from reading
+		// these are postex vertices
+		glVertexAttribPointer(texture_program->TexCoord_vec2,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(PosTexVertex),
+			(GLbyte*)0 + offsetof(PosTexVertex, TexCoord)
+		);
+
+		glEnableVertexAttribArray(texture_program->TexCoord_vec2);
+
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	} 
 }
 
 PlayMode::~PlayMode() {
@@ -183,6 +315,68 @@ void PlayMode::update(float elapsed) {
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
+
+	auto texUpdate = [&] (TexStruct *tex, bool isSmall){
+		// don't do this if back face culling
+			std::vector<PosTexVertex> verts;
+
+		if (!isSmall)
+		{
+			verts.emplace_back(PosTexVertex{
+				.Position = glm::vec3(-1.0f, -0.5f, 0.0f),
+				.TexCoord = glm::vec2(0.0f, 0.0f),
+			});
+
+			verts.emplace_back(PosTexVertex{
+				.Position = glm::vec3(-1.0f, 1.0f, 0.0f),
+				.TexCoord = glm::vec2(0.0f, 1.0f),
+			});
+
+			verts.emplace_back(PosTexVertex{
+				.Position = glm::vec3(1.0f, -0.5f, 0.0f),
+				.TexCoord = glm::vec2(1.0f, 0.0f),
+			});
+
+			verts.emplace_back(PosTexVertex{
+				.Position = glm::vec3(1.0f, 1.0f, 0.0f),
+				.TexCoord = glm::vec2(1.0f, 1.0f),
+			});
+		} else {
+				verts.emplace_back(PosTexVertex{
+				.Position = glm::vec3(-1.0f, -1.0f, 0.0f),
+				.TexCoord = glm::vec2(0.0f, 0.0f),
+			});
+
+			verts.emplace_back(PosTexVertex{
+				.Position = glm::vec3(-1.0f, -0.5f, 0.0f),
+				.TexCoord = glm::vec2(0.0f, 1.0f),
+			});
+
+			verts.emplace_back(PosTexVertex{
+				.Position = glm::vec3(1.0f, -1.0f, 0.0f),
+				.TexCoord = glm::vec2(1.0f, 0.0f),
+			});
+
+			verts.emplace_back(PosTexVertex{
+				.Position = glm::vec3(1.0f, -0.5f, 0.0f),
+				.TexCoord = glm::vec2(1.0f, 1.0f),
+			});
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, tex->tristrip_buffer);
+
+		// tells us update:  GL_STREAM_DRAW, stream = update once a frame, draw = what we're gonna do
+		// could read, draw copy etc.
+		// worst case, run slower, telling about gpu memory, fast for static or stream from memory
+		glBufferData(GL_ARRAY_BUFFER, verts.size()*sizeof(verts[0]), verts.data(), GL_STREAM_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		tex->count = verts.size();
+	};
+
+	texUpdate(&tex_example, false);
+	texUpdate(&tex_example2, true);
+
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
@@ -205,6 +399,34 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
 	scene.draw(*camera);
+	GL_ERRORS();
+
+	{
+		// from in-class example
+
+		// TODO: add alpha
+
+		
+		auto drawTex = [&](TexStruct *tex) {
+
+			glUseProgram(texture_program->program);
+			glBindVertexArray(tex->tristrip_buffer_for_texture_program_vao);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, tex->tex);
+			// number, transposed or not
+			glUniformMatrix4fv(texture_program->CLIP_FROM_LOCAL_mat4, 1, GL_FALSE, glm::value_ptr(tex->CLIP_FROM_LOCAL));
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, tex->count);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glBindVertexArray(0);
+			glUseProgram(0);
+		};
+
+		drawTex(&tex_example);
+		drawTex(&tex_example2);
+
+
+
+	}
 
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);

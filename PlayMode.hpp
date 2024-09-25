@@ -45,4 +45,21 @@ struct PlayMode : Mode {
 	//camera:
 	Scene::Camera *camera = nullptr;
 
+
+	// from in-class texture example
+
+	struct PosTexVertex {
+		glm::vec3 Position;
+		glm::vec2 TexCoord;
+	};
+
+	struct TexStruct{
+		GLuint tex = 0;
+		GLuint tristrip_buffer = 0; 
+		GLuint tristrip_buffer_for_texture_program_vao  = 0; // vao, describes how to attach tristrip
+
+		GLsizei count = 0; // how many things are there
+		glm::mat4 CLIP_FROM_LOCAL = glm::mat4(1.0f);
+	} tex_example, tex_example2;
+
 };

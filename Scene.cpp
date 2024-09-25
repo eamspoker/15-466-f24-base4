@@ -155,6 +155,7 @@ void Scene::draw(glm::mat4 const &world_to_clip, glm::mat4x3 const &world_to_lig
 				glBindTexture(pipeline.textures[i].target, 0);
 			}
 		}
+		GL_ERRORS();
 		glActiveTexture(GL_TEXTURE0);
 
 	}
